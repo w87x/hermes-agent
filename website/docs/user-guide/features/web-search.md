@@ -27,6 +27,7 @@ Both are configured through a single backend selection. Providers are chosen via
 | **Parallel** | `PARALLEL_API_KEY` | ✔ | ✔ | Paid |
 | **xAI (Grok)** | `XAI_API_KEY` or `hermes auth login xai-oauth` | ✔ | — | Paid (SuperGrok or per-token) |
 | **Yandex Search** | `YANDEX_SEARCH_API_KEY` + `YANDEX_FOLDER_ID` | ✔ | — | Paid (Yandex Cloud) |
+| **AnySearch** | `ANYSEARCH_API_KEY` | ✔ | ✔ | 1 000 requests/day |
 
 Brave Search, DDGS, xAI, and Yandex Search are **search-only** — pair any of them with Firecrawl/Tavily/Exa/Parallel when you also need `web_extract`. DDGS uses the [`ddgs` Python package](https://pypi.org/project/ddgs/) under the hood; if it isn't already installed, run `pip install ddgs` (or let Hermes lazy-install it on first use). xAI runs Grok's server-side `web_search` tool on the Responses API — results are LLM-generated rather than index-backed, so titles, descriptions, and URL choice are all model output (see the [trust-model caveat](#xai-grok) below).
 
@@ -371,6 +372,31 @@ YANDEX_SEARCH_TYPE=SEARCH_TYPE_RU  # optional — search domain (default: SEARCH
 
 ---
 
+### AnySearch
+
+Search infrastructure purpose-built for AI agents, with 17 vertical domains (finance, academic, code, legal, health, etc.) and both search and extract in one provider.
+
+```bash
+# ~/.hermes/.env
+ANYSEARCH_API_KEY=your-api-key-here
+```
+
+Get a free key at [anysearch.com/console/api-keys](https://www.anysearch.com/console/api-keys). The free tier includes 1 000 requests/day, no credit card required.
+
+Then select AnySearch as the backend:
+
+```yaml
+# ~/.hermes/config.yaml
+web:
+  backend: "anysearch"
+```
+
+**Search + extract in one provider.** `web_search` calls AnySearch's REST `/v1/search` endpoint directly. `web_extract` has no dedicated REST endpoint — it goes through AnySearch's MCP server (`tools/call` → `extract`) and falls back to a direct HTTP fetch of the URL if that call fails for any reason, so `web_extract` still returns something usable rather than a hard error.
+
+Not included in [auto-detection](#auto-detection) — set `web.backend: "anysearch"` explicitly.
+
+---
+
 ## Configuration
 
 ### Single backend
@@ -380,7 +406,7 @@ Set one provider for all web capabilities:
 ```yaml
 # ~/.hermes/config.yaml
 web:
-  backend: "searxng"   # firecrawl | searxng | brave-free | ddgs | tavily | exa | parallel | xai | yandex
+  backend: "searxng"   # firecrawl | searxng | brave-free | ddgs | tavily | exa | parallel | xai | yandex | anysearch
 ```
 
 ### Per-capability configuration
@@ -416,6 +442,8 @@ If no backend is explicitly configured, Hermes picks the first available one bas
 xAI Web Search is **not** in the auto-detection chain — having `XAI_API_KEY` set (or being signed in via xAI Grok OAuth) does not automatically route web traffic through xAI, since those credentials are also used for inference / TTS / image gen and the user may want a different backend for web. Opt in explicitly with `web.backend: "xai"`.
 
 Yandex Search is also **not** in the auto-detection chain — it requires two credentials (`YANDEX_SEARCH_API_KEY` + `YANDEX_FOLDER_ID`) rather than the single-variable pattern the auto-detect cascade checks. Opt in explicitly with `web.backend: "yandex"`.
+
+AnySearch is also **not** in the auto-detection chain — opt in explicitly with `web.backend: "anysearch"`.
 
 ---
 

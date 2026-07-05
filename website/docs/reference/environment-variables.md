@@ -140,6 +140,8 @@ For native Anthropic auth, Hermes prefers Claude Code's own credential files whe
 | `YANDEX_SEARCH_REGION` | Optional Yandex geo region ID override for Search API results |
 | `YANDEX_SEARCH_LANG` | Optional Yandex Search API result localization override (e.g. `LOCALIZATION_EN`) |
 | `YANDEX_SEARCH_TYPE` | Optional Yandex Search API search-domain override (default: `SEARCH_TYPE_RU`) |
+| `ANYSEARCH_API_KEY` | AnySearch API key for agent-native web search + extract, 17 vertical domains ([anysearch.com/console/api-keys](https://www.anysearch.com/console/api-keys)) — 1k free requests/day |
+| `ANYSEARCH_BASE_URL` | Override the AnySearch API endpoint (default: `https://api.anysearch.com`) |
 | `BROWSERBASE_API_KEY` | Browser automation ([browserbase.com](https://browserbase.com/)) |
 | `BROWSERBASE_PROJECT_ID` | Browserbase project ID |
 | `BROWSER_USE_API_KEY` | Browser Use cloud browser API key ([browser-use.com](https://browser-use.com/)) |

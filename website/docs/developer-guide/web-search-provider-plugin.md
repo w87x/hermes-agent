@@ -6,7 +6,7 @@ description: "How to build a web-search/extract/crawl backend plugin for Hermes 
 
 # Building a Web Search Provider Plugin
 
-Web-search provider plugins register a backend that services `web_search`, `web_extract`, and (optionally) deep-crawl tool calls. Built-in providers — Firecrawl, SearXNG, Tavily, Exa, Parallel, Brave Search (free tier), xAI, Yandex Search, and DDGS — all ship as plugins under `plugins/web/<name>/`. You can add a new one, or override a bundled one, by dropping a directory next to them.
+Web-search provider plugins register a backend that services `web_search`, `web_extract`, and (optionally) deep-crawl tool calls. Built-in providers — Firecrawl, SearXNG, Tavily, Exa, Parallel, Brave Search (free tier), xAI, Yandex Search, AnySearch, and DDGS — all ship as plugins under `plugins/web/<name>/`. You can add a new one, or override a bundled one, by dropping a directory next to them.
 
 :::tip
 Web search is one of several **backend plugins** Hermes supports. The others (with their own ABCs) are [Image Generation Provider Plugins](/developer-guide/image-gen-provider-plugin), [Video Generation Provider Plugins](/developer-guide/video-gen-provider-plugin), [Memory Provider Plugins](/developer-guide/memory-provider-plugin), [Context Engine Plugins](/developer-guide/context-engine-plugin), and [Model Provider Plugins](/developer-guide/model-provider-plugin). General tool/hook/CLI plugins live in [Build a Hermes Plugin](/guides/build-a-hermes-plugin).
@@ -243,6 +243,7 @@ If your provider wraps a third-party SDK (like DDGS does with the `ddgs` package
 - **`plugins/web/searxng/`** — self-hosted, URL-configured backend with no auth.
 - **`plugins/web/xai/`** — LLM-backed search via Grok's server-side `web_search` tool. Shows how to reuse an existing OAuth/env-var credential surface (`tools/xai_http.py`) without adding new env vars, and how to write a cheap `is_available()` that honors the no-network contract.
 - **`plugins/web/yandex/`** — search-only, two-credential (`API key` + `folder ID`) provider whose backend response is base64-encoded XML rather than JSON. Shows how to gate `is_available()` on multiple env vars and decode/parse a non-JSON payload inside `search()`.
+- **`plugins/web/anysearch/`** — multi-capability provider whose `search()` hits a plain REST endpoint but whose `extract()` has no dedicated REST endpoint at all — it calls the vendor's MCP server (`tools/call` JSON-RPC) and falls back to a direct HTTP GET per URL when that fails. Shows how to implement a resilient `extract()` with a fallback path instead of surfacing the primary failure straight to the caller.
 
 ## Distribute via pip
 
