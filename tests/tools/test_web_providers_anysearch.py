@@ -58,12 +58,16 @@ class TestAnySearchProviderIsConfigured:
 
 
 class TestAnySearchProviderSearch:
+    # AnySearch wraps results as {"data": {"results": [...]}}, not a
+    # top-level "results" key — confirmed against a real API response.
     _SAMPLE_RESPONSE = {
-        "results": [
-            {"title": "A", "url": "https://a.example.com", "snippet": "snip A", "content": "full A"},
-            {"title": "B", "url": "https://b.example.com", "content": "full B"},
-            {"title": "C", "url": "https://c.example.com", "snippet": "", "content": ""},
-        ]
+        "data": {
+            "results": [
+                {"title": "A", "url": "https://a.example.com", "snippet": "snip A", "content": "full A"},
+                {"title": "B", "url": "https://b.example.com", "content": "full B"},
+                {"title": "C", "url": "https://c.example.com", "snippet": "", "content": ""},
+            ]
+        }
     }
 
     @staticmethod
@@ -102,7 +106,7 @@ class TestAnySearchProviderSearch:
             captured["url"] = url
             captured["headers"] = kwargs.get("headers", {})
             captured["json"] = kwargs.get("json", {})
-            return self._mock_resp({"results": []})
+            return self._mock_resp({"data": {"results": []}})
 
         with patch("httpx.post", side_effect=fake_post):
             AnySearchWebSearchProvider().search("q", limit=5)
@@ -120,7 +124,7 @@ class TestAnySearchProviderSearch:
 
         def fake_post(url, **kwargs):
             captured["json"] = kwargs.get("json", {})
-            return self._mock_resp({"results": []})
+            return self._mock_resp({"data": {"results": []}})
 
         with patch("httpx.post", side_effect=fake_post):
             AnySearchWebSearchProvider().search("q", limit=100)
@@ -136,7 +140,7 @@ class TestAnySearchProviderSearch:
 
         def fake_post(url, **kwargs):
             captured["url"] = url
-            return self._mock_resp({"results": []})
+            return self._mock_resp({"data": {"results": []}})
 
         with patch("httpx.post", side_effect=fake_post):
             AnySearchWebSearchProvider().search("q", limit=5)
@@ -168,6 +172,18 @@ class TestAnySearchProviderSearch:
 
         assert result["success"] is False
         assert "boom" in result["error"] or "AnySearch" in result["error"]
+
+    def test_flat_results_shape_still_works(self, monkeypatch):
+        """Defensive fallback: a top-level "results" key (no "data" wrapper) still parses."""
+        monkeypatch.setenv("ANYSEARCH_API_KEY", "as-key-123")
+        from plugins.web.anysearch.provider import AnySearchWebSearchProvider
+
+        flat_response = {"results": [{"title": "A", "url": "https://a.example.com", "snippet": "s"}]}
+        with patch("httpx.post", return_value=self._mock_resp(flat_response)):
+            result = AnySearchWebSearchProvider().search("q", limit=5)
+
+        assert result["success"] is True
+        assert len(result["data"]["web"]) == 1
 
     def test_missing_key_returns_failure(self, monkeypatch):
         monkeypatch.delenv("ANYSEARCH_API_KEY", raising=False)

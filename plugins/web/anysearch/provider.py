@@ -74,7 +74,10 @@ def _anysearch_request(path: str, payload: Dict[str, Any], *, timeout: float) ->
 def _normalize_anysearch_search_results(response: Dict[str, Any]) -> Dict[str, Any]:
     """Map AnySearch ``/v1/search`` response to ``{success, data: {web: [...]}}``."""
     web_results = []
-    for i, result in enumerate(response.get("results", [])):
+    # AnySearch wraps results inside {"data": {"results": [...]}}; fall back
+    # to a top-level "results" key defensively in case that ever changes.
+    results = response.get("data", {}).get("results") or response.get("results", [])
+    for i, result in enumerate(results):
         web_results.append(
             {
                 "title": result.get("title", ""),
